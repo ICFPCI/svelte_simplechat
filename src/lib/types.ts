@@ -15,12 +15,14 @@ export type Conversation = {
 }
 
 export type User = {
-	id: number
+	id?: number
+	first_name: string
+	last_name: string
 	username: string
 	email: string
 	password: string
-	created: Date
-	modified: Date
+	created?: Date
+	modified?: Date
 }
 
 export type Message = {

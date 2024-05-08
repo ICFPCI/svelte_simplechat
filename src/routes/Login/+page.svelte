@@ -56,8 +56,8 @@
 					</Button>
 				</div>
 				<div class="mt-4 text-center text-sm">
-					Ya tienes una cuenta?
-					<a href="Register" class="underline"> Iniciar sesión </a>
+					Todavía no tienes una cuenta?
+					<a href="Register" class="underline"> Registrarse </a>
 				</div>
 			</Card.Content>
 		</Card.Root>

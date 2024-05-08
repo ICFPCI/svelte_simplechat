@@ -1,24 +1,29 @@
 import {redirect, type Actions} from '@sveltejs/kit';
 
-import AuthService from '$lib/api/auth.js';
-
-export async function load({cookies}){
-    const authToken = cookies.get("access_token")
-    if (!authToken) return {clearUser: true}
-    
-    return {clearUser: false}
-}
+import UserService from '$lib/api/user.js';
+import type {User} from '$lib/types.js'
 
 export const actions: Actions = {
     default: async ({request, cookies}) => {
-        const authService = new AuthService()
-        const loginFormData = await request.formData();
-        const username = loginFormData.get("username")?.toString() ?? "";
-        const password = loginFormData.get("password")?.toString() ?? "";
+        const userService = new UserService()
+        const registerFormData = await request.formData();
+        const firstname = registerFormData.get("firstname")?.toString() ?? "";
+        const lastname = registerFormData.get("lastname")?.toString() ?? "";
+        const email = registerFormData.get("email")?.toString() ?? "";
+        const username = registerFormData.get("username")?.toString() ?? "";
+        const password = registerFormData.get("password")?.toString() ?? "";
+        
+        const newUser: User = {
+            first_name: firstname,
+            last_name: lastname,
+            email: email,
+            username: username,
+            password: password
+        }
 
-        const response = await authService.login(username, password)
+        console.log(JSON.stringify(newUser))
 
-        // let loginRespose: loginFormResponse
+        const response = await userService.createUser(newUser)
 
         if (!response.ok){
             return {
@@ -26,53 +31,6 @@ export const actions: Actions = {
                 message: response.body
             };
         }
-
-        const jwtToken = await response.json()
-
-        try{
-            cookies.set("refresh_token", jwtToken.refresh, {path:"/", httpOnly:false, maxAge: 60 * 60 * 8 , secure:false})
-            cookies.set("access_token", jwtToken.access, {path:"/", httpOnly:false, maxAge: 60 * 60 * 8 , secure:false})
-        }catch(error){
-            return {
-                error: true,
-                message: error
-            }
-        }
-        
-        throw redirect(303, "/Chat")
+        throw redirect(303, "/Login")
     }
 };
-// default: async ({request, cookies}) => {
-//     let data = await request.formData()
-
-//     let userID: string = "";
-//     let username = data.get('username')
-//     let password = data.get('password')
-
-//     const res = await fetch(`${API_URL}/api/v1.0/auth/login`,
-//         {
-//             method: "POST",
-//             headers: {"Content-Type":"application/json"},
-//             body: JSON.stringify({username,password})
-//         }
-//     )
-
-//     let success:boolean = false;
-//     if (res.ok){
-//         const body = await res.json()
-//         const expiryDate = new Date();
-//         expiryDate.setDate(expiryDate.getDate() + 7);
-//         cookies.set("access_token", body.access, {path:"/", httpOnly:false, expires: expiryDate, secure:false});
-//         cookies.set("refresh_token", body.refresh, {path:"/", httpOnly:false, expires: expiryDate, secure:false});
-
-//         const decodedJWT = jose.decodeJwt(body.access)
-
-//         username = String(decodedJWT.username)
-//         userID = String(decodedJWT.user_id)
-
-//         success = true;
-
-//     }
-    
-//     return { success, username, userID };
-// }
