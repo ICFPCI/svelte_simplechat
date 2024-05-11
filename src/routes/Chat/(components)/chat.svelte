@@ -1,27 +1,29 @@
 <script lang="ts">
 	import ChatDisplay from './chat-display.svelte';
 	import ChatList from './chat-list.svelte';
+	import ContactList from './contact-list.svelte';
 	import { conversationStore } from '$lib/store.js';
-	import { Input } from '$lib/components/ui/input/index.js';
 	import * as Icons from '$lib/icons.js';
 	import * as Resizable from '$lib/components/ui/resizable/index.js';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import * as jose from 'jose';
 	import { Separator } from '$lib/components/ui/separator/index.js';
-	import type { Conversation, Message } from '$lib/types.js';
-	import Sun from 'svelte-radix/Sun.svelte';
-	import Moon from 'svelte-radix/Moon.svelte';
+	import type { Conversation, Message, User } from '$lib/types.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { toggleMode } from 'mode-watcher';
 	import { onMount } from 'svelte';
-	import { json } from '@sveltejs/kit';
+	import { Toggle } from "$lib/components/ui/toggle/index.js";
+	import { expoInOut, quintInOut } from 'svelte/easing';
 
-	export let conversations: Conversation[];
 	export let defaultLayout = [30, 70];
+	export let conversations: Conversation[];
+	export let contacts: User[]
 
 	let socket: WebSocket;
 	let username: string | null;
 	let loading: boolean = true;
+
+	let showStartConversation: boolean = false;
 
 	function onLayoutChange(sizes: number[]) {
 		document.cookie = `PaneForge:layout=${JSON.stringify(sizes)}`;
@@ -43,7 +45,7 @@
 	async function insertMessage(message: Message) {
 		for (let i = 0; i < conversations.length; i++) {
 			if (conversations[i].id == Number(message.conversation)) {
-				console.log("Entre???")
+				console.log('Entre???');
 				conversations[i].messages.push(message);
 				conversations = conversations;
 			}
@@ -62,28 +64,27 @@
 			const event_data = JSON.parse(event.data);
 			console.log('Mensaje recibido:', event_data);
 
-			switch(event_data.type){
-				case "new-message":
-					const message: Message = event_data.data
+			switch (event_data.type) {
+				case 'new-message':
+					const message: Message = event_data.data;
 					console.log('Mensaje: ', message);
 					insertMessage(message);
 					break;
-				case "conversation-archived":
-					if($conversationStore.selected === event_data.data.id){
-						console.log("Se tiene que eliminar")
+				case 'conversation-archived':
+					if ($conversationStore.selected === event_data.data.id) {
+						console.log('Se tiene que eliminar');
 						conversationStore.setInteraction(null);
 					}
-					
+
 					for (let i = 0; i < conversations.length; i++) {
 						if (conversations[i].id === event_data.data.id) {
-							console.log("se encontro")
+							console.log('se encontro');
 							conversations.splice(i, 1);
-							conversations = conversations
+							conversations = conversations;
 							break;
 						}
 					}
-				}
-
+			}
 		};
 
 		socket.onerror = (error) => {
@@ -93,6 +94,41 @@
 		socket.onclose = () => {
 			console.log('Conexión cerrada.');
 		};
+	}
+
+	let selectedContact: User | null;
+
+	function handleContactSelected(contact: User){
+		showStartConversation = false;
+		selectedContact = contact
+		conversationStore.setInteraction(null)
+		conversationStore.setStartingConversation()
+	}
+
+	function handleEvent(event: any) {
+		console.log(event.detail.type)
+
+		switch(event.detail.type){
+			case("closeWindow"):
+				showStartConversation = false;
+				break;
+			case("contactSelected"):
+				handleContactSelected(event.detail.contact)
+				break;
+			}
+	}
+
+	function customTransition(node: any, params: any) {
+		const { height, width } = getComputedStyle(node);
+		const { duration = 500,  easing = quintInOut} = params;
+
+		return {
+			duration,
+			css: (t: any) => `
+				clip-path: polygon(0% 0%, ${easing(t)*100}% 0%, ${easing(t)*100}% 100%, 0% 100%);
+				overflow-y: hidden;
+			`
+		}
 	}
 
 	onMount(async () => {
@@ -117,16 +153,25 @@
 		class="flex items-stretch"
 	>
 		<Resizable.Pane defaultSize={defaultLayout[0]} minSize={25}>
+			{#if showStartConversation}
+				<div class="relative">
+					<div class="absolute inset-0 z-10">
+						<div transition:customTransition={{ duration: 500, easing: expoInOut }}>
+							<ContactList contacts={contacts} on:message={handleEvent}/>
+						</div>
+					</div>
+				</div>
+			{/if}
 			<div class="flex items-center px-4 py-2">
 				<h1 class="text-xl font-bold">SimpleChat</h1>
 				<div class="ml-auto flex items-center gap-2">
 					<Tooltip.Root openDelay={0} group>
 						<Tooltip.Trigger>
 							<Button on:click={toggleMode} variant="ghost" size="icon">
-								<Sun
+								<Icons.Sun
 									class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
 								/>
-								<Moon
+								<Icons.Moon
 									class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
 								/>
 								<span class="sr-only">Cambiar tema</span>
@@ -138,10 +183,12 @@
 					</Tooltip.Root>
 					<Tooltip.Root openDelay={0} group>
 						<Tooltip.Trigger>
-							<Button variant="ghost" size="icon">
-								<Icons.MessagesSquarePlus />
+							<Toggle
+								on:click={() => {showStartConversation = !showStartConversation}}
+							>
+								<Icons.MessagesSquarePlus class="h-[1.2rem] w-[1.2rem]"/>
 								<span class="sr-only">Iniciar conversación</span>
-							</Button>
+							</Toggle>
 						</Tooltip.Trigger>
 						<Tooltip.Content>
 							<p>Nuevo Chat</p>
@@ -150,16 +197,8 @@
 				</div>
 			</div>
 			<Separator />
-
-			<div class="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-				<form>
-					<div class="relative">
-						<Icons.Search class="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
-						<Input placeholder="Search" class="pl-8" />
-					</div>
-				</form>
-			</div>
-			<ChatList {conversations} {username} />
+			<ChatList conversations={conversations} username={username} />
+			
 		</Resizable.Pane>
 		<Resizable.Handle withHandle />
 		<Resizable.Pane defaultSize={defaultLayout[1]} minSize={50}>
@@ -169,6 +208,7 @@
 				) || undefined}
 				{socket}
 				{username}
+				{selectedContact}
 			/>
 		</Resizable.Pane>
 	</Resizable.PaneGroup>

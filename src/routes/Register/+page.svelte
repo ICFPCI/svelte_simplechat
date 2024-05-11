@@ -10,44 +10,28 @@
 
 	function verifyForm(){
 		
-		const firstname = (document.getElementById('firstname') as HTMLInputElement).value;
-		const lastname = (document.getElementById('lastname') as HTMLInputElement).value;
-		const username = (document.getElementById('username') as HTMLInputElement).value;
-		const email = (document.getElementById('email') as HTMLInputElement).value;
+		const inputsIDS: string[] = ["firstname", "lastname", "username", "email", "password", "repeatpassword"]
+		
+		for(const field of inputsIDS){
+			if (!(document.getElementById(field) as HTMLInputElement).value) {
+				validated = false
+				return;
+			}
+		}
+		
 		const password1 = (document.getElementById("password") as HTMLInputElement).value;
 		const password2 = (document.getElementById('repeatpassword') as HTMLInputElement).value;
 
-
-		if (firstname === ""){
-			validated = false
-			return
-		}
-		if (lastname === ""){
-			validated = false
-			return
-		}
-		if (username === ""){
-			validated = false
-			return
-		}
-		if (email === ""){
-			validated = false
-			return
-		}
-		if (password1 == ""){
-			validated = false
-			return
-		}
-		if (password2 == ""){
-			validated = false
-			return
-		}
 		if (password1 != password2){
 			validated = false
 			return
 		}
 
 		validated = true
+	}
+
+	function verifyEmail(){
+		console.log("Hola mundo")
 	}
 	
 </script>
@@ -79,15 +63,16 @@
 					</div>
 					<div class="grid gap-2">
 						<Label for="username">Usuario</Label>
-						<Input id="username" name="username" placeholder="juan_perez" on:input={verifyForm} required />
+						<Input id="username" name="username" placeholder="juan_perez" on:input={() => {verifyForm(); verifyEmail()}} required />
 					</div>
 					<div class="grid gap-2">
 						<Label for="email">Email</Label>
-						<Input id="email" name="email" type="email" placeholder="username@mail.com" on:input={verifyForm} required />
+						<Input id="email" name="email" type="email" placeholder="username@mail.com" on:input={() => {verifyEmail(); verifyForm()}} required />
 					</div>
 					<div class="grid gap-2">
 						<Label for="password">Contraseña</Label>
 						<Input id="password" name="password" type="password" on:input={verifyForm} required/>
+						
 					</div>
 					<div class="grid gap-2">
 						<Label for="repeatpassword">Repetir contraseña</Label>

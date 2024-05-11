@@ -11,28 +11,27 @@
 
 	let submited: boolean = false;
 
-	// export let form;
-	// $:{
-	// 	if (submited && form != null){
-	// 		submited = false
-	// 		if (form?.success){
-	// 			const username = String(form?.username)
-	// 			const userID = String(form?.userID)
-	// 			if (username && userID) {
-	// 				localStorage.setItem("username", username)
-	// 				localStorage.setItem("user_id", userID)
-	// 				goto('/Chat');
-	// 			}
-	// 		}else{
-	// 			toast.info('error');
-	// 		}
-	// 	}
-	// }
-
+	export let form;
+	$: {
+		if (submited != false && form != null) {
+			submited = false;
+			if (form?.success == true) {
+				goto("/Chat")
+			}else{
+				toast.info('No se ha podido iniciar sesion');
+			}
+		}
+	}
 </script>
 
 <div class="flex h-svh w-svw items-center justify-center">
-	<form method="POST" use:enhance on:submit={()=>{submited=true}}>
+	<form
+		method="POST"
+		use:enhance
+		on:submit={() => {
+			submited = true;
+		}}
+	>
 		<Card.Root class="h-fit w-full max-w-sm">
 			<Card.Header>
 				<Card.Title class="text-2xl">Iniciar sesión</Card.Title>

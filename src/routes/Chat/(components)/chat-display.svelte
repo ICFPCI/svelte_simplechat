@@ -15,10 +15,12 @@
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import type { Conversation } from '$lib/types.js';
+	import { conversationStore } from '$lib/store';
 
 	export let conversation: Conversation | undefined;
 	export let socket: WebSocket;
 	export let username: string | null;
+	export let selectedContact;
 
 	let todayDate = now(getLocalTimeZone());
 	let container: HTMLElement;
@@ -39,7 +41,7 @@
 	});
 
 	function getConversationName(conversation: Conversation): string {
-		if (conversation.type === "i" && conversation.users.length === 2) {
+		if (conversation.type === "i" && conversation.users.length <= 2) {
 			return conversation.users.find(user => user.username !== username)?.username || "null";
 		}
 		return "null";
@@ -93,172 +95,176 @@
 
 </script>
 
-<div class="flex h-full flex-col">
-	<div class="flex items-center p-2">
-		<div class="flex items-center gap-2">
-			<Tooltip.Root openDelay={0} group>
-				<Tooltip.Trigger
-					id="fijar_conversacion"
-					class={buttonVariants({ variant: 'ghost', size: 'icon' })}
-					disabled={!conversation}
-				>
-					<Icons.Pin class="size-4" />
-					<span class="sr-only">Fijar conversación</span>
-				</Tooltip.Trigger>
-				<Tooltip.Content>Fijar conversación</Tooltip.Content>
-			</Tooltip.Root>
-			<Tooltip.Root openDelay={0} group>
-				<Tooltip.Trigger
-					id="archivar_conversacion"
-					class={buttonVariants({ variant: 'ghost', size: 'icon' })}
-					disabled={!conversation}
-				>
-					<Button variant="ghost" size="icon" on:click={archiveConversation}>
-						<Icons.Archive class="size-4" />
-						<span class="sr-only">Archivar conversación</span>
-					</Button>
-				</Tooltip.Trigger>
-				<Tooltip.Content>Archivar conversación</Tooltip.Content>
-			</Tooltip.Root>
-			<Separator orientation="vertical" class="mx-1 h-6" />
-			<Tooltip.Root openDelay={0} group>
-				<Popover.Root portal={null}>
-					<Tooltip.Trigger asChild let:builder={tooltip_builder} id="snooze_popover">
-						<Popover.Trigger asChild let:builder={popover_builder} id="snooze_popover">
-							<Button
-								builders={[tooltip_builder, popover_builder]}
-								variant="ghost"
-								size="icon"
-								disabled={!conversation}
-							>
-								<Icons.VolumeX class="size-4" />
-								<span class="sr-only"></span>
-							</Button>
-						</Popover.Trigger>
+{#if $conversationStore.isStartingConversation}
+	<p>Starting Conversation</p>
+{:else}
+	<div class="flex h-full flex-col">
+		<div class="flex items-center p-2">
+			<div class="flex items-center gap-2">
+				<Tooltip.Root openDelay={0} group>
+					<Tooltip.Trigger
+						id="fijar_conversacion"
+						class={buttonVariants({ variant: 'ghost', size: 'icon' })}
+						disabled={!conversation}
+					>
+						<Icons.Pin class="size-4" />
+						<span class="sr-only">Fijar conversación</span>
 					</Tooltip.Trigger>
-					<Popover.Content class="flex w-[535px] p-0">
-						<div class="flex flex-col gap-2 border-r px-2 py-4">
-							<div class="px-4 text-sm font-medium">Silenciar</div>
-							<div class="grid min-w-[250px] gap-1">
-								<Button variant="ghost" class="justify-start font-normal">
-									Una Hora
-									<span class="ml-auto text-muted-foreground">
-										{relativeFormatter.format(todayDate.add({ hours: 1 }).toDate())}
-									</span>
+					<Tooltip.Content>Fijar conversación</Tooltip.Content>
+				</Tooltip.Root>
+				<Tooltip.Root openDelay={0} group>
+					<Tooltip.Trigger
+						id="archivar_conversacion"
+						class={buttonVariants({ variant: 'ghost', size: 'icon' })}
+						disabled={!conversation}
+					>
+						<Button variant="ghost" size="icon" on:click={archiveConversation}>
+							<Icons.Archive class="size-4" />
+							<span class="sr-only">Archivar conversación</span>
+						</Button>
+					</Tooltip.Trigger>
+					<Tooltip.Content>Archivar conversación</Tooltip.Content>
+				</Tooltip.Root>
+				<Separator orientation="vertical" class="mx-1 h-6" />
+				<Tooltip.Root openDelay={0} group>
+					<Popover.Root portal={null}>
+						<Tooltip.Trigger asChild let:builder={tooltip_builder} id="snooze_popover">
+							<Popover.Trigger asChild let:builder={popover_builder} id="snooze_popover">
+								<Button
+									builders={[tooltip_builder, popover_builder]}
+									variant="ghost"
+									size="icon"
+									disabled={!conversation}
+								>
+									<Icons.VolumeX class="size-4" />
+									<span class="sr-only"></span>
 								</Button>
-								<Button variant="ghost" class="justify-start font-normal">
-									Dos Horas
-									<span class="ml-auto text-muted-foreground">
-										{relativeFormatter.format(todayDate.add({ hours: 2 }).toDate())}
-									</span>
-								</Button>
-								<Button variant="ghost" class="justify-start font-normal">
-									Tres Horas
-									<span class="ml-auto text-muted-foreground">
-										{relativeFormatter.format(todayDate.add({ hours: 3 }).toDate())}
-									</span>
-								</Button>
-								<Button variant="ghost" class="justify-center bg-gray-50 font-normal">
-									Esperar a la respuesta del cliente
-								</Button>
+							</Popover.Trigger>
+						</Tooltip.Trigger>
+						<Popover.Content class="flex w-[535px] p-0">
+							<div class="flex flex-col gap-2 border-r px-2 py-4">
+								<div class="px-4 text-sm font-medium">Silenciar</div>
+								<div class="grid min-w-[250px] gap-1">
+									<Button variant="ghost" class="justify-start font-normal">
+										Una Hora
+										<span class="ml-auto text-muted-foreground">
+											{relativeFormatter.format(todayDate.add({ hours: 1 }).toDate())}
+										</span>
+									</Button>
+									<Button variant="ghost" class="justify-start font-normal">
+										Dos Horas
+										<span class="ml-auto text-muted-foreground">
+											{relativeFormatter.format(todayDate.add({ hours: 2 }).toDate())}
+										</span>
+									</Button>
+									<Button variant="ghost" class="justify-start font-normal">
+										Tres Horas
+										<span class="ml-auto text-muted-foreground">
+											{relativeFormatter.format(todayDate.add({ hours: 3 }).toDate())}
+										</span>
+									</Button>
+									<Button variant="ghost" class="justify-center bg-gray-50 font-normal">
+										Esperar a la respuesta del cliente
+									</Button>
+								</div>
 							</div>
-						</div>
-						<div class="p-2">
-							<Calendar bind:value={todayDate} initialFocus />
-						</div>
-					</Popover.Content>
-				</Popover.Root>
-				<Tooltip.Content>Silenciar conversación</Tooltip.Content>
-			</Tooltip.Root>
+							<div class="p-2">
+								<Calendar bind:value={todayDate} initialFocus />
+							</div>
+						</Popover.Content>
+					</Popover.Root>
+					<Tooltip.Content>Silenciar conversación</Tooltip.Content>
+				</Tooltip.Root>
+			</div>
+			<div class="ml-auto flex items-center gap-2" />
+			<Separator orientation="vertical" class="mx-2 h-6" />
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger
+					id="more_options_dropdown"
+					class={buttonVariants({ variant: 'ghost', size: 'icon' })}
+					disabled={!conversation}
+				>
+					<Icons.EllipsisVertical class="size-4" />
+					<span class="sr-only">More</span>
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Content align="end">
+					<DropdownMenu.Item>Mark as unread</DropdownMenu.Item>
+					<DropdownMenu.Item>Star thread</DropdownMenu.Item>
+					<DropdownMenu.Item>Add label</DropdownMenu.Item>
+					<DropdownMenu.Item>Mute thread</DropdownMenu.Item>
+				</DropdownMenu.Content>
+			</DropdownMenu.Root>
 		</div>
-		<div class="ml-auto flex items-center gap-2" />
-		<Separator orientation="vertical" class="mx-2 h-6" />
-		<DropdownMenu.Root>
-			<DropdownMenu.Trigger
-				id="more_options_dropdown"
-				class={buttonVariants({ variant: 'ghost', size: 'icon' })}
-				disabled={!conversation}
-			>
-				<Icons.EllipsisVertical class="size-4" />
-				<span class="sr-only">More</span>
-			</DropdownMenu.Trigger>
-			<DropdownMenu.Content align="end">
-				<DropdownMenu.Item>Mark as unread</DropdownMenu.Item>
-				<DropdownMenu.Item>Star thread</DropdownMenu.Item>
-				<DropdownMenu.Item>Add label</DropdownMenu.Item>
-				<DropdownMenu.Item>Mute thread</DropdownMenu.Item>
-			</DropdownMenu.Content>
-		</DropdownMenu.Root>
-	</div>
-	<Separator />
-	{#if conversation}
-		<div class="flex h-full flex-1 flex-col overflow-hidden">
-			<div class="flex items-start p-4">
-				<div class="flex items-start gap-4 text-sm">
-					<Avatar.Root>
-						<Avatar.Image alt={getConversationName(conversation).toUpperCase()} />
-						<Avatar.Fallback>
-							{getConversationName(conversation).toUpperCase()
-								.split(' ')
-								.map((chunk) => chunk[0])
-								.join('')}
-						</Avatar.Fallback>
-					</Avatar.Root>
-					<div class="grid gap-1">
-						<div class="font-semibold">{getConversationName(conversation)}</div>
-						<!-- <div class="line-clamp-1 text-xs">{mail.subject}</div> -->
-						<div class="line-clamp-1 text-xs">
-							<span class="font-medium">Numero:</span>
-							{conversation.name}
-							<span class="font-medium">Archivado:</span>
-							{conversation.is_archived}
+		<Separator />
+		{#if conversation}
+			<div class="flex h-full flex-1 flex-col overflow-hidden">
+				<div class="flex items-start p-4">
+					<div class="flex items-start gap-4 text-sm">
+						<Avatar.Root>
+							<Avatar.Image alt={getConversationName(conversation).toUpperCase()} />
+							<Avatar.Fallback>
+								{getConversationName(conversation).toUpperCase()
+									.split(' ')
+									.map((chunk) => chunk[0])
+									.join('')}
+							</Avatar.Fallback>
+						</Avatar.Root>
+						<div class="grid gap-1">
+							<div class="font-semibold">{getConversationName(conversation)}</div>
+							<!-- <div class="line-clamp-1 text-xs">{mail.subject}</div> -->
+							<div class="line-clamp-1 text-xs">
+								<span class="font-medium">Numero:</span>
+								{conversation.name}
+								<span class="font-medium">Archivado:</span>
+								{conversation.is_archived}
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
-			<Separator />
-			<div
-				bind:this={container}
-				class="flex-1 overflow-y-auto whitespace-pre-wrap p-4 px-4 text-sm"
-			>
-				{#each conversation?.messages as message}
-					{#if message.user.username == username}
-						<OutTextBubble
-							username={message.user.username}
-							created={message.created}
-							text={message.text}
-							status={'Entregado'}
-						/>
+				<Separator />
+				<div
+					bind:this={container}
+					class="flex-1 overflow-y-auto whitespace-pre-wrap p-4 px-4 text-sm"
+				>
+					{#each conversation?.messages as message}
+						{#if message.user.username == username}
+							<OutTextBubble
+								username={message.user.username}
+								created={message.created}
+								text={message.text}
+								status={'Entregado'}
+							/>
+						{:else}
+							<InTextBubble
+								username={message.user.username}
+								created={message.created}
+								text={message.text}
+							/>
+						{/if}
 					{:else}
-						<InTextBubble
-							username={message.user.username}
-							created={message.created}
-							text={message.text}
-						/>
-					{/if}
-				{:else}
-					No items
-				{/each}
+						No items
+					{/each}
+				</div>
+				<Separator class="mt-auto" />
+				<div class="p-2">
+					<form on:submit|preventDefault={sendMessage}>
+						<div class="flex items-center gap-4">
+							<Textarea
+								bind:value={messageText}
+								class="p-4"
+								placeholder={`Responder a ${getConversationName(conversation)}...`}
+							/>
+							<Button type="submit" size="icon" variant="ghost" class="ml-auto">
+								<Icons.SendHorizontal class="size-6" />
+							</Button>
+						</div>
+					</form>
+				</div>
 			</div>
-			<Separator class="mt-auto" />
-			<div class="p-2">
-				<form on:submit|preventDefault={sendMessage}>
-					<div class="flex items-center gap-4">
-						<Textarea
-							bind:value={messageText}
-							class="p-4"
-							placeholder={`Responder a ${getConversationName(conversation)}...`}
-						/>
-						<Button type="submit" size="icon" variant="ghost" class="ml-auto">
-							<Icons.SendHorizontal class="size-6" />
-						</Button>
-					</div>
-				</form>
+		{:else}
+			<div class="p-8 text-center text-muted-foreground">
+				No se ha seleccionado ninguna interacción
 			</div>
-		</div>
-	{:else}
-		<div class="p-8 text-center text-muted-foreground">
-			No se ha seleccionado ninguna interacción
-		</div>
-	{/if}
-</div>
+		{/if}
+	</div>
+{/if}

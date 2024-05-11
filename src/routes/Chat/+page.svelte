@@ -5,7 +5,7 @@
 </script>
 
 {#if !data.error}
-	<Chat conversations={data.conversations} defaultLayout={data.layout} />
+	<Chat defaultLayout={data.layout} conversations={data.conversations} contacts={data.contacts} />
 {:else}
 	<h1>{data.error}</h1>
 {/if}

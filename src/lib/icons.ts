@@ -27,3 +27,6 @@ export { default as MessagesSquarePlus } from "lucide-svelte/icons/message-squar
 export { default as SendHorizontal } from "lucide-svelte/icons/send-horizontal";
 export { default as LoaderCircle } from "lucide-svelte/icons/loader-circle";
 export { default as Search } from 'lucide-svelte/icons/search';
+export { default as Sun }  from 'lucide-svelte/icons/sun';
+export { default as Moon }  from 'lucide-svelte/icons/moon';
+export { default as ArrowLeft } from 'lucide-svelte/icons/arrow-left';

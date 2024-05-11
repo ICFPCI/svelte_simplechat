@@ -50,27 +50,28 @@ export async function handle({ event, resolve }) {
             throw redirect(303, "/Login");
         }
 
-        if (!(await verifyToken(access_token))) {
-            if (!(await verifyToken(refresh_token))) {
-                event.cookies.delete("access_token", { path: '/' });
-                event.cookies.delete("refresh_token", { path: '/' });
-                throw redirect(303, "/Login");
-            }
-
-            const new_token = await refreshToken(refresh_token)
-
-            if(!(new_token)){
-                event.cookies.delete("access_token", { path: '/' });
-                event.cookies.delete("refresh_token", { path: '/' });
-                throw redirect(303, "/Login");
-            }
-
-            event.cookies.set("access_token", new_token, {path:"/", httpOnly:false, maxAge: 60 * 60 * 8 , secure:false})
-            
+        if (await verifyToken(access_token)) {
             return resolve(event)
-            
         }
+        
+        if (!(await verifyToken(refresh_token))) {
+            event.cookies.delete("access_token", { path: '/' });
+            event.cookies.delete("refresh_token", { path: '/' });
+            throw redirect(303, "/Login");
+        }
+
+        const new_token = await refreshToken(refresh_token)
+
+        if(!(new_token)){
+            event.cookies.delete("access_token", { path: '/' });
+            event.cookies.delete("refresh_token", { path: '/' });
+            throw redirect(303, "/Login");
+        }
+
+        event.cookies.set("access_token", new_token, {path:"/", httpOnly:false, maxAge: 60 * 60 * 8 , secure:false})
+        
         return resolve(event)
+        
     } catch (error) {
         event.cookies.delete("access_token", { path: '/' });
         event.cookies.delete("refresh_token", { path: '/' });

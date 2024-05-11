@@ -1,8 +1,10 @@
-import type { Conversation } from "$lib/types";
+import type { Conversation, User } from "$lib/types";
 import type { PageServerLoad } from "./$types";
 import ConversationService from "$lib/api/conversation";
+import UserService from "$lib/api/user";
 
 const conversationService = new ConversationService();
+const userService = new UserService();
 
 export const load: PageServerLoad = async ({ cookies }) => {
 
@@ -14,18 +16,39 @@ export const load: PageServerLoad = async ({ cookies }) => {
 	layoutCookie && (layout = JSON.parse(layoutCookie));
 
 	let conversations: Conversation[] = [];
+	let contacts: User[] = [];
 	let error: string | undefined = undefined;
 
 	if (token != "") {
-		const response = await conversationService.getAllConversations(token);
+		try{
+			const response = await conversationService.getAllConversations(token);
+	
+			if (!response.ok){
+				throw new Error(response.statusText)
+			}
 
-		if (response.ok) {
 			conversations = await response.json();
-		} else {
-			error = response.statusText;
+
+		}catch(e){
+			console.log("Conversations response error: ", error)
+			error = String(e)		
+		}
+
+		try{
+			const response = await userService.getAllUsers(token);
+
+			if (!response.ok){
+				throw new Error(response.statusText)
+			}
+
+			contacts = await response.json();
+
+		}catch(e){
+			console.log("Users response error: ", e)
+			error = String(e)		
 		}
 
 	}
 
-	return { layout, conversations, error };
+	return { layout, conversations, contacts, error };
 };

@@ -18,12 +18,11 @@ export const actions: Actions = {
 
         const response = await authService.login(username, password)
 
-        // let loginRespose: loginFormResponse
-
         if (!response.ok){
+            console.log("en el response.ok")
             return {
-                error: true,
-                message: response.body
+                success: false,
+                message: response.statusText
             };
         }
 
@@ -33,13 +32,17 @@ export const actions: Actions = {
             cookies.set("refresh_token", jwtToken.refresh, {path:"/", httpOnly:false, maxAge: 60 * 60 * 8 , secure:false})
             cookies.set("access_token", jwtToken.access, {path:"/", httpOnly:false, maxAge: 60 * 60 * 8 , secure:false})
         }catch(error){
+            console.log("en el try")
             return {
-                error: true,
+                success: false,
                 message: error
             }
         }
         
-        throw redirect(303, "/Chat")
+        return {
+            success: true,
+            message: ""
+        }
     }
 };
 // default: async ({request, cookies}) => {
