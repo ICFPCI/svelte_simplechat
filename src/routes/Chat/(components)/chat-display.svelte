@@ -40,13 +40,6 @@
 		}
 	});
 
-	function getConversationName(conversation: Conversation): string {
-		if (conversation.type === "i" && conversation.users.length <= 2) {
-			return conversation.users.find(user => user.username !== username)?.username || "null";
-		}
-		return "null";
-	}
-
 	function sendMessage() {
 		if (messageText === "") {
 			toast.error('Campo de texto vacio. Asegúrate de ingresar el texto a ser enviado.');
@@ -188,10 +181,7 @@
 					<span class="sr-only">More</span>
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end">
-					<DropdownMenu.Item>Mark as unread</DropdownMenu.Item>
-					<DropdownMenu.Item>Star thread</DropdownMenu.Item>
-					<DropdownMenu.Item>Add label</DropdownMenu.Item>
-					<DropdownMenu.Item>Mute thread</DropdownMenu.Item>
+					<DropdownMenu.Item>Pin</DropdownMenu.Item>
 				</DropdownMenu.Content>
 			</DropdownMenu.Root>
 		</div>
@@ -201,22 +191,20 @@
 				<div class="flex items-start p-4">
 					<div class="flex items-start gap-4 text-sm">
 						<Avatar.Root>
-							<Avatar.Image alt={getConversationName(conversation).toUpperCase()} />
+							<Avatar.Image alt={conversation.contact?.username.toUpperCase()} />
 							<Avatar.Fallback>
-								{getConversationName(conversation).toUpperCase()
+								{conversation.contact?.username.toUpperCase()
 									.split(' ')
 									.map((chunk) => chunk[0])
 									.join('')}
 							</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid gap-1">
-							<div class="font-semibold">{getConversationName(conversation)}</div>
-							<!-- <div class="line-clamp-1 text-xs">{mail.subject}</div> -->
+							<div class="font-semibold">{conversation.contact?.username}</div>
+
 							<div class="line-clamp-1 text-xs">
-								<span class="font-medium">Numero:</span>
-								{conversation.name}
-								<span class="font-medium">Archivado:</span>
-								{conversation.is_archived}
+								<span class="font-medium">Usuario:</span>
+								{conversation.contact?.username}
 							</div>
 						</div>
 					</div>
@@ -252,7 +240,7 @@
 							<Textarea
 								bind:value={messageText}
 								class="p-4"
-								placeholder={`Responder a ${getConversationName(conversation)}...`}
+								placeholder={`Responder a ${conversation.contact?.username}...`}
 							/>
 							<Button type="submit" size="icon" variant="ghost" class="ml-auto">
 								<Icons.SendHorizontal class="size-6" />

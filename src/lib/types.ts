@@ -7,6 +7,7 @@ export type Conversation = {
 	id: number
 	name: string
 	users: User[]
+	contact: User | null
 	messages: Message[]
 	created: Date
 	modified: Date

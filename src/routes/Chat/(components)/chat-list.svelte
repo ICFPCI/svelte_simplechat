@@ -10,14 +10,6 @@
 	import Input from '$lib/components/ui/input/input.svelte';
 
 	export let conversations: Conversation[];
-	export let username: string | null;
-
-	function getConversationName(conversation: Conversation): string | null {
-		if (conversation.type === 'i' && conversation.users.length === 2) {
-			return conversation.users.find((user) => user.username !== username)?.username || null;
-		}
-		return null;
-	}
 </script>
 
 <div class="bg-background/95 p-4 z-10">
@@ -46,7 +38,7 @@
 					<div class="flex items-center">
 						<div class="flex items-center gap-2">
 							{#if conversation.type == 'i'}
-								<div class="font-semibold">{getConversationName(conversation)}</div>
+								<div class="font-semibold">{conversation.contact?.username}</div>
 							{:else}
 								<div class="font-semibold">{conversation.name}</div>
 							{/if}
