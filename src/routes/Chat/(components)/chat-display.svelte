@@ -43,27 +43,37 @@
 	});
 
 	function sendMessage() {
-		if (messageText === '') {
-			toast.error('Campo de texto vacio. Asegúrate de ingresar el texto a ser enviado.');
-			return;
-		}
-
-		if (conversation == undefined) {
-			return;
-		}
-
 		if (socket && socket.readyState === WebSocket.OPEN) {
-			const wsMessage = JSON.stringify({
-				type: 'send-message',
-				message: {
-					text: messageText,
-					conversation_id: conversation?.id.toString()
+			let wsMessage;
+			if ($conversationStore.isStartingConversation && contact?.id != undefined){
+				wsMessage = JSON.stringify({
+					type: 'start-conversation',
+					message: {
+						text: messageText,
+						contact_user_id: contact?.id.toString()
+					}
+				});
+			}else{
+				if (messageText === '') {
+					toast.error('Campo de texto vacio. Asegúrate de ingresar el texto a ser enviado.');
+					return;
 				}
-			});
+
+				if (conversation == undefined) {
+					return;
+				}
+				wsMessage = JSON.stringify({
+					type: 'send-message',
+					message: {
+						text: messageText,
+						conversation_id: conversation?.id.toString()
+					}
+				});
+			}
 
 			socket.send(wsMessage);
 		} else {
-			console.error('La conexion websocket no esta abierta');
+			console.error('The websocket is not open');
 		}
 		messageText = '';
 	}

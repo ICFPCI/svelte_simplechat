@@ -35,7 +35,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 
 			conversations.forEach(conversation => {
 				if(conversation.type === "i"){
-					conversation.contact = conversation.users.find((user) => user.id !== Number(user_id)) || null;
+					conversation.contact = conversation.users.find((user) => user.id !== Number(user_id)) || undefined;
 				}
 			})
 

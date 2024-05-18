@@ -42,12 +42,34 @@
 		return data;
 	}
 
+	async function insertConversation(conversation: Conversation){
+		conversation.contact = conversation.users.find((user) => user.username !== username) || undefined;
+		conversations.unshift(conversation)
+		conversation = conversation
+		conversationStore.setInteraction(conversation.id)
+	}
+
 	async function insertMessage(message: Message) {
 		for (let i = 0; i < conversations.length; i++) {
 			if (conversations[i].id == Number(message.conversation)) {
 				console.log('Entre???');
 				conversations[i].messages.push(message);
 				conversations = conversations;
+			}
+		}
+	}
+
+	async function archiveConversation(conversation: any) {
+		if ($conversationStore.selected === conversation.id) {
+						conversationStore.setInteraction(null);
+		}
+
+		for (let i = 0; i < conversations.length; i++) {
+			if (conversations[i].id === conversation.id) {
+				console.log('se encontro');
+				conversations.splice(i, 1);
+				conversations = conversations;
+				break;
 			}
 		}
 	}
@@ -65,25 +87,18 @@
 			console.log('Mensaje recibido:', event_data);
 
 			switch (event_data.type) {
+				case 'new-conversation':
+					const conversation: Conversation = event_data.data;
+					insertConversation(conversation);
+					break;
 				case 'new-message':
 					const message: Message = event_data.data;
 					console.log('Mensaje: ', message);
 					insertMessage(message);
 					break;
 				case 'conversation-archived':
-					if ($conversationStore.selected === event_data.data.id) {
-						console.log('Se tiene que eliminar');
-						conversationStore.setInteraction(null);
-					}
-
-					for (let i = 0; i < conversations.length; i++) {
-						if (conversations[i].id === event_data.data.id) {
-							console.log('se encontro');
-							conversations.splice(i, 1);
-							conversations = conversations;
-							break;
-						}
-					}
+					archiveConversation(event_data.data)
+					break
 			}
 		};
 
