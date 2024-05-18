@@ -6,7 +6,7 @@
 	import OutTextBubble from './(chat-bubble)/out/out-text-bubble.svelte';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
-	import { afterUpdate, onMount } from 'svelte';
+	import { afterUpdate, onMount, beforeUpdate } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
@@ -14,13 +14,13 @@
 	import * as Icons from '$lib/icons.js';
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
-	import type { Conversation } from '$lib/types.js';
+	import type { Conversation, User } from '$lib/types.js';
 	import { conversationStore } from '$lib/store';
 
 	export let conversation: Conversation | undefined;
 	export let socket: WebSocket;
 	export let username: string | null;
-	export let selectedContact;
+	export let contact: User | undefined;
 
 	let todayDate = now(getLocalTimeZone());
 	let container: HTMLElement;
@@ -33,6 +33,8 @@
 		hourCycle: 'h12'
 	});
 
+	$: contact = !$conversationStore.isStartingConversation ? conversation?.contact : contact;
+
 	afterUpdate(() => {
 		if (container) {
 			const { scrollHeight } = container;
@@ -41,7 +43,7 @@
 	});
 
 	function sendMessage() {
-		if (messageText === "") {
+		if (messageText === '') {
 			toast.error('Campo de texto vacio. Asegúrate de ingresar el texto a ser enviado.');
 			return;
 		}
@@ -63,7 +65,7 @@
 		} else {
 			console.error('La conexion websocket no esta abierta');
 		}
-		messageText = ""
+		messageText = '';
 	}
 
 	function archiveConversation(){
@@ -85,12 +87,9 @@
 			console.error('La conexion websocket no esta abierta');
 		}
 	}
-
 </script>
 
-{#if $conversationStore.isStartingConversation}
-	<p>Starting Conversation</p>
-{:else}
+{#if $conversationStore.selected || $conversationStore.isStartingConversation}
 	<div class="flex h-full flex-col">
 		<div class="flex items-center p-2">
 			<div class="flex items-center gap-2">
@@ -186,30 +185,31 @@
 			</DropdownMenu.Root>
 		</div>
 		<Separator />
-		{#if conversation}
-			<div class="flex h-full flex-1 flex-col overflow-hidden">
-				<div class="flex items-start p-4">
-					<div class="flex items-start gap-4 text-sm">
-						<Avatar.Root>
-							<Avatar.Image alt={conversation.contact?.username.toUpperCase()} />
-							<Avatar.Fallback>
-								{conversation.contact?.username.toUpperCase()
-									.split(' ')
-									.map((chunk) => chunk[0])
-									.join('')}
-							</Avatar.Fallback>
-						</Avatar.Root>
-						<div class="grid gap-1">
-							<div class="font-semibold">{conversation.contact?.username}</div>
+		<div class="flex h-full flex-1 flex-col overflow-hidden">
+			<div class="flex items-start p-4">
+				<div class="flex items-start gap-4 text-sm">
+					<Avatar.Root>
+						<Avatar.Image alt={contact?.username.toUpperCase()} />
+						<Avatar.Fallback>
+							{contact?.username
+								.toUpperCase()
+								.split(' ')
+								.map((chunk) => chunk[0])
+								.join('')}
+						</Avatar.Fallback>
+					</Avatar.Root>
+					<div class="grid gap-1">
+						<div class="font-semibold">{contact?.username}</div>
 
-							<div class="line-clamp-1 text-xs">
-								<span class="font-medium">Usuario:</span>
-								{conversation.contact?.username}
-							</div>
+						<div class="line-clamp-1 text-xs">
+							<span class="font-medium">Usuario:</span>
+							{contact?.username}
 						</div>
 					</div>
 				</div>
-				<Separator />
+			</div>
+			<Separator />
+			{#if conversation}
 				<div
 					bind:this={container}
 					class="flex-1 overflow-y-auto whitespace-pre-wrap p-4 px-4 text-sm"
@@ -233,26 +233,22 @@
 						No items
 					{/each}
 				</div>
-				<Separator class="mt-auto" />
-				<div class="p-2">
-					<form on:submit|preventDefault={sendMessage}>
-						<div class="flex items-center gap-4">
-							<Textarea
-								bind:value={messageText}
-								class="p-4"
-								placeholder={`Responder a ${conversation.contact?.username}...`}
-							/>
-							<Button type="submit" size="icon" variant="ghost" class="ml-auto">
-								<Icons.SendHorizontal class="size-6" />
-							</Button>
-						</div>
-					</form>
-				</div>
+			{/if}
+			<Separator class="mt-auto" />
+			<div class="p-2">
+				<form on:submit|preventDefault={sendMessage}>
+					<div class="flex items-center gap-4">
+						<Textarea
+							bind:value={messageText}
+							class="p-4"
+							placeholder={`${$conversationStore.isStartingConversation ? "Comenzar conversación con" : "Responder a"} ${contact?.username}...`}
+						/>
+						<Button type="submit" size="icon" variant="ghost" class="ml-auto">
+							<Icons.SendHorizontal class="size-6" />
+						</Button>
+					</div>
+				</form>
 			</div>
-		{:else}
-			<div class="p-8 text-center text-muted-foreground">
-				No se ha seleccionado ninguna interacción
-			</div>
-		{/if}
+		</div>
 	</div>
 {/if}

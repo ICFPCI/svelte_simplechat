@@ -12,12 +12,12 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { toggleMode } from 'mode-watcher';
 	import { onMount } from 'svelte';
-	import { Toggle } from "$lib/components/ui/toggle/index.js";
+	import { Toggle } from '$lib/components/ui/toggle/index.js';
 	import { expoInOut, quintInOut } from 'svelte/easing';
 
 	export let defaultLayout = [30, 70];
 	export let conversations: Conversation[];
-	export let contacts: User[]
+	export let contacts: User[];
 
 	let socket: WebSocket;
 	let username: string | null;
@@ -96,39 +96,44 @@
 		};
 	}
 
-	let selectedContact: User | null;
+	let selectedContact: User | undefined;
 
-	function handleContactSelected(contact: User){
+	function handleContactSelected(contact: User) {
 		showStartConversation = false;
-		selectedContact = contact
-		conversationStore.setInteraction(null)
-		conversationStore.setStartingConversation()
+		selectedContact = contact; 
+		const conversation: Conversation | undefined = conversations?.find((conversation) => conversation.contact?.id === contact.id)
+		if (conversation != undefined){
+			conversationStore.setInteraction(conversation?.id);
+		}else{
+			conversationStore.setInteraction(null);
+			conversationStore.setStartingConversation();
+		}
 	}
 
 	function handleEvent(event: any) {
-		console.log(event.detail.type)
+		console.log(event.detail.type);
 
-		switch(event.detail.type){
-			case("closeWindow"):
+		switch (event.detail.type) {
+			case 'closeWindow':
 				showStartConversation = false;
 				break;
-			case("contactSelected"):
-				handleContactSelected(event.detail.contact)
+			case 'contactSelected':
+				handleContactSelected(event.detail.contact);
 				break;
-			}
+		}
 	}
 
 	function customTransition(node: any, params: any) {
 		const { height, width } = getComputedStyle(node);
-		const { duration = 500,  easing = quintInOut} = params;
+		const { duration = 500, easing = quintInOut } = params;
 
 		return {
 			duration,
 			css: (t: any) => `
-				clip-path: polygon(0% 0%, ${easing(t)*100}% 0%, ${easing(t)*100}% 100%, 0% 100%);
+				clip-path: polygon(0% 0%, ${easing(t) * 100}% 0%, ${easing(t) * 100}% 100%, 0% 100%);
 				overflow-y: hidden;
 			`
-		}
+		};
 	}
 
 	onMount(async () => {
@@ -157,7 +162,7 @@
 				<div class="relative">
 					<div class="absolute inset-0 z-10">
 						<div transition:customTransition={{ duration: 500, easing: expoInOut }}>
-							<ContactList contacts={contacts} on:message={handleEvent}/>
+							<ContactList {contacts} on:message={handleEvent} />
 						</div>
 					</div>
 				</div>
@@ -183,12 +188,16 @@
 					</Tooltip.Root>
 					<Tooltip.Root openDelay={0} group>
 						<Tooltip.Trigger>
-							<Toggle
-								on:click={() => {showStartConversation = !showStartConversation}}
+							<Button
+								variant="ghost"
+								size="icon"
+								on:click={() => {
+									showStartConversation = !showStartConversation;
+								}}
 							>
-								<Icons.MessagesSquarePlus class="h-[1.2rem] w-[1.2rem]"/>
+								<Icons.MessagesSquarePlus class="h-[1.2rem] w-[1.2rem]" />
 								<span class="sr-only">Iniciar conversación</span>
-							</Toggle>
+							</Button>
 						</Tooltip.Trigger>
 						<Tooltip.Content>
 							<p>Nuevo Chat</p>
@@ -197,8 +206,7 @@
 				</div>
 			</div>
 			<Separator />
-			<ChatList conversations={conversations} username={username} />
-			
+			<ChatList {conversations} />
 		</Resizable.Pane>
 		<Resizable.Handle withHandle />
 		<Resizable.Pane defaultSize={defaultLayout[1]} minSize={50}>
@@ -208,7 +216,7 @@
 				) || undefined}
 				{socket}
 				{username}
-				{selectedContact}
+				contact={selectedContact}
 			/>
 		</Resizable.Pane>
 	</Resizable.PaneGroup>
