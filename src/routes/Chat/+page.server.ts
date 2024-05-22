@@ -21,6 +21,8 @@ export const load: PageServerLoad = async ({ cookies }) => {
 	let error: string | undefined = undefined;
 
 	if (token != "") {
+		const decodedJWT = jose.decodeJwt(token);
+		const user_id = String(decodedJWT.user_id);
 		try{
 			const response = await conversationService.getAllConversations(token);
 	
@@ -30,8 +32,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 
 			conversations = await response.json();
 
-			const decodedJWT = jose.decodeJwt(token);
-			const user_id = String(decodedJWT.user_id);
+			
 
 			conversations.forEach(conversation => {
 				if(conversation.type === "i"){
@@ -45,7 +46,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 		}
 
 		try{
-			const response = await userService.getAllUsers(token);
+			const response = await userService.getAllUsersContacts(token, user_id);
 
 			if (!response.ok){
 				throw new Error(response.statusText)

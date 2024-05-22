@@ -48,6 +48,14 @@ class UserService {
             method: 'DELETE'
         });
     }
+
+    async getAllUsersContacts(authToken: string, id: string): Promise<Response> {
+        return await fetch(`${apiUrl}/${id}/contacts/`, {
+            headers: {
+                Authorization: `Bearer ${authToken}`
+            }
+        });
+    }
 }
 
 export default UserService;
