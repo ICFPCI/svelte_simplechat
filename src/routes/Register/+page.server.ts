@@ -24,12 +24,12 @@ export const actions: Actions = {
         console.log(JSON.stringify(newUser))
 
         const response = await userService.createUser(newUser)
-
+        
         if (!response.ok){
-            return {
+            return JSON.stringify({
                 error: true,
                 message: response.body
-            };
+            });
         }
         throw redirect(303, "/Login")
     }
